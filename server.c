@@ -12,6 +12,9 @@ int main() {
     struct sockaddr_in address;
     int addrlen = sizeof(address);
     char buffer[4096] = { 0 };
+    char method[8];
+    char path[1024];
+
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     // AF_INET means uses IPv4
@@ -21,7 +24,6 @@ int main() {
         perror("socket failed.");
         exit(EXIT_FAILURE);
     }
-
 
     // bindig / config socket
     address.sin_family = AF_INET;
@@ -50,12 +52,37 @@ int main() {
         printf("Request Recieved:\n%s\n", buffer);
 
 
-        const char *response =
+        char response[4096];
+
+        sscanf(buffer, "%s %s", method, path);
+        printf("method = %s\n", method);
+        printf("path = %s\n", path);
+
+        if(strcmp(path, "/") == 0){
+            sprintf(response, 
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: text/plain\r\n"
             "Content-Length: 21\r\n"
             "\r\n"
-            "Hello from C server!\n";
+            "Hello from C server!\n");
+        } else if (strcmp(path, "/about") == 0){
+            sprintf(response, 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n\r\n"
+            "<h1>This is about page.</h1>");
+        }
+        else if (strcmp(path, "/contact") == 0){
+            sprintf(response, 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n\r\n"
+            "<h1>This is contact page.</h1>");
+        }
+        else {
+            sprintf(response,
+                    "HTTP/1.1 404 Not Found\r\n"
+                    "Content-Type: text/html\r\n\r\n"
+                    "<h1>404 - Not Found</h1>\n");
+        }
 
         send(client_fd, response, strlen(response), 0);
 
